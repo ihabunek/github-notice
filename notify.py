@@ -10,10 +10,10 @@ import urllib2
 
 # -- SETTINGS ------------------------------------------------------------------
 
-from settings import *
-
 # Path to the cache file
 CACHE = 'cache.json'
+
+from settings import *
 
 # -- CODE ----------------------------------------------------------------------
 
@@ -48,12 +48,12 @@ def main():
     save_cache(cache)
 
 def notify_new(request):
-    subject = "[Github] New pull request [%d]: %s" % (request['number'], request['title'])
+    subject = "[Github] [Created] Pull request #%d: %s" % (request['number'], request['title'])
     message = format_pull_request(request)
     send_email(subject, message)
 
 def notify_modified(request):
-    subject = "[Github] Pull request [%d] modified: %s" % (request['number'], request['title'])
+    subject = "[Github] [Updated] Pull request #%d: %s" % (request['number'], request['title'])
     message = format_pull_request(request)
     send_email(subject, message)
 
@@ -62,21 +62,23 @@ def format_pull_request(request):
     comments = fetch_comments(number)
 
     title = "#%d: %s" % (number, request['title'])
-    url = request['html_url']
 
-    msg = "<h1>%s</h1>" % title;
-    msg += "<p>%s</p>" % request['body']
-    msg += '<p>URL: <a href="%s">%s</a></p>' % (url, url)
+    msg = title + "\r\n";
+    msg += '=' * len(title) + "\r\n"
+    msg += request['body'] + "\r\n\r\n"
+    msg += "URL: %s" % request['html_url']
 
     if (comments):
-        msg += "<h2>Comments</h2>"
+        msg += "\r\n\r\n"
+        msg += "Comments:\r\n"
+        msg += "-" * 50 + "\r\n"
 
     for comment in comments:
         user = comment['user']['login']
         time = comment['created_at']
-        msg += comment['body']
-        msg += "<small>Commented by %s at %s</small>" % (user, time)
-        msg += "<hr />"
+        msg += comment['body'].strip() + "\r\n\r\n"
+        msg += "Commented by %s at %s" % (user, time)
+        msg += "\r\n" + ("-" * 50) +"\r\n"
 
     return msg
 
