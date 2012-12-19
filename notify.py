@@ -6,7 +6,7 @@ import contextlib
 import json
 import os
 import smtplib
-import urllib2
+import requests
 
 # -- SETTINGS ------------------------------------------------------------------
 
@@ -14,6 +14,13 @@ import urllib2
 CACHE = 'cache.json'
 
 from settings import *
+
+# Authenticate if credentials are provided
+if (GITHUB_USER and GITHUB_PASS):
+    GITHUB_AUTH = (GITHUB_USER, GITHUB_PASS)
+else:
+    GITHUB_AUTH = None
+
 
 # -- CODE ----------------------------------------------------------------------
 
@@ -95,29 +102,16 @@ def fetch_comments(number):
     return fetch_url(url)
 
 def fetch_url(url):
-    req = urllib2.Request(url)
-
-    # Hacky HTTPS authorisation
-    if GITHUB_USER and GITHUB_PASS:
-        base64string = base64.encodestring('%s:%s' % (GITHUB_USER, GITHUB_PASS))[:-1]
-        authheader =  "Basic %s" % base64string
-        req.add_header("Authorization", authheader)
-
     print "Loading: %s" % url
-
-    # Process request
-    with contextlib.closing(urllib2.urlopen(req)) as file:
-        file = urllib2.urlopen(req)
-        data = file.read()
-        info = dict(file.info())
-
+    r = requests.get(url, auth = GITHUB_AUTH)
+    r.raise_for_status()
+    
     # Print usage info
-    limit = info['x-ratelimit-limit']
-    remaining = info['x-ratelimit-remaining']
+    limit = r.headers['x-ratelimit-limit']
+    remaining = r.headers['x-ratelimit-remaining']
     print "Remaining %s out of %s requests for this hour" % (remaining, limit)
-
-    # Return decoded JSON
-    return json.loads(data)
+    
+    return r.json()
 
 def load_cache():
     if os.path.exists(CACHE):

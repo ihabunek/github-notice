@@ -1,3 +1,4 @@
-*.pyc
-settings.py
+env
 cache.json
+settings.py
+*.pyc
