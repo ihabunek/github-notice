@@ -7,6 +7,8 @@ import json
 import os
 import smtplib
 import requests
+import logging
+import logging.config
 
 # -- SETTINGS ------------------------------------------------------------------
 
@@ -21,6 +23,8 @@ if (GITHUB_USER and GITHUB_PASS):
 else:
     GITHUB_AUTH = None
 
+logging.config.dictConfig(LOGGING)
+logger = logging.getLogger('notify.py')
 
 # -- CODE ----------------------------------------------------------------------
 
@@ -102,14 +106,14 @@ def fetch_comments(number):
     return fetch_url(url)
 
 def fetch_url(url):
-    print "Loading: %s" % url
+    logger.info("Loading: %s", url)
     r = requests.get(url, auth = GITHUB_AUTH)
     r.raise_for_status()
     
-    # Print usage info
+    # Log API usage info
     limit = r.headers['x-ratelimit-limit']
     remaining = r.headers['x-ratelimit-remaining']
-    print "Remaining %s out of %s requests for this hour" % (remaining, limit)
+    logger.debug("Remaining %s out of %s requests for this hour", remaining, limit)
     
     return r.json()
 
@@ -127,6 +131,8 @@ def save_cache(cache):
         f.write(cache_json)
 
 def send_email(subject, message):
+    logger.info("Sending email: %s", subject)
+
     msg = MIMEText(message)
     msg['Subject'] = subject
     msg['From'] = MAIL_FROM

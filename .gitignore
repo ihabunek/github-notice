@@ -1,4 +1,5 @@
-env
-cache.json
-settings.py
 *.pyc
+cache.json
+env
+notify.log*
+settings.py
